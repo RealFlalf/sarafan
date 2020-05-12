@@ -10,7 +10,7 @@ module.exports = {
     compress: true,
     port: 8000,
     allowedHosts: [
-      'localhost:8080npm st'
+      'localhost:8080'
     ]
   },
   module: {
@@ -28,6 +28,13 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: 'vue-loader'
+      },
+      {
+        test: /\.css$/,
+        use: [
+          'vue-style-loader',
+          'css-loader'
+        ]
       }
     ]
   },

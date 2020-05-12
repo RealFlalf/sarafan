@@ -5,22 +5,28 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 import tsed.sarafan.domain.Message;
 import tsed.sarafan.domain.Views;
+import tsed.sarafan.dto.EventType;
+import tsed.sarafan.dto.ObjectType;
 import tsed.sarafan.repo.MessageRepo;
+import tsed.sarafan.util.WsSender;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 @RestController
 @RequestMapping("message")
 public class MessageController {
     private final MessageRepo messageRepo;
+    private final BiConsumer<EventType, Message> wsSender;
 
-    public MessageController(MessageRepo messageRepo) {
+    public MessageController(MessageRepo messageRepo, WsSender wsSender) {
         this.messageRepo = messageRepo;
+        this.wsSender = wsSender.getSender(ObjectType.MESSAGE, Views.IdName.class);
     }
 
     @GetMapping
-    @JsonView(Views.IdNum.class)
+    @JsonView(Views.IdName.class)
     public List<Message> list() {
         return messageRepo.findAll();
     }
@@ -37,7 +43,10 @@ public class MessageController {
             @RequestBody Message message
     ) {
         message.setCreationDate(LocalDateTime.now());
-        return messageRepo.save(message);
+        Message updatedMessage = messageRepo.save(message);
+        wsSender.accept(EventType.CREATE, updatedMessage);
+
+        return updatedMessage;
     }
 
     @PutMapping("{id}")
@@ -46,8 +55,10 @@ public class MessageController {
             @RequestBody Message message
     ) {
         BeanUtils.copyProperties(message, messageFromDB, "id");
+        Message updatedMessage = messageRepo.save(messageFromDB);
+        wsSender.accept(EventType.UPDATE, updatedMessage);
 
-        return messageRepo.save(messageFromDB   );
+        return updatedMessage;
     }
 
     @DeleteMapping("{id}")
@@ -55,5 +66,6 @@ public class MessageController {
             @PathVariable("id") Message message
     ) {
         messageRepo.delete(message);
+        wsSender.accept(EventType.REMOVE, message);
     }
 }
