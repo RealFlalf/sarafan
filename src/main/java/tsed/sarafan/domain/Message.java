@@ -26,4 +26,13 @@ public class Message {
 	public void setCreationDate(LocalDateTime creationDate) {
         this.creationDate = creationDate;
 	}
+
+    @JsonView(Views.FullMessage.class)
+    private String link;
+    @JsonView(Views.FullMessage.class)
+    private String linkTitle;
+    @JsonView(Views.FullMessage.class)
+    private String linkDescription;
+    @JsonView(Views.FullMessage.class)
+    private String linkCover;
 }
